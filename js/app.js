@@ -180,49 +180,52 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !introRunning && performance.now() - lastAct > 20000 && SJ.S.anchorKind !== 'perch') { act(); SJ.hop(.7); speak(pick(lines.back, 'b'), { look: 'happy' }); } });
   $('#mailBtn').addEventListener('click', () => { if (SJ.S.anchorKind === 'contact') speak(lines.mail, { look: 'wink' }); });
 
-  /* ---------- likes, reviews, visits ---------- */
-  const likeBtn = $('#likeBtn'), likeText = $('#likeText'), form = $('#reviewForm'), rvStatus = $('#rvStatus'), revList = $('#revList'), modBox = $('#modBox'), modList = $('#modList');
+  /* ---------- likes, reviews, visits (Supabase) ---------- */
+  const SB_URL = 'https://cajggcdngoguhwnmbdxz.supabase.co', SB_KEY = 'sb_publishable_ks_xfngTOL-vWORAJ6UNOg_su1mfufx'; /* publishable key: safe in the browser */
+  const likeBtn = $('#likeBtn'), likeText = $('#likeText'), form = $('#reviewForm'), rvStatus = $('#rvStatus'), revList = $('#revList');
   const stat = { visits: $('#statVisits'), likes: $('#statLikes'), reviews: $('#statReviews') };
-  let db = null, uid = null, isOwner = false, liked = false, canWrite = true;
-  const data = { reviews: [], approved: {} };
+  let online = false, liked = false, busyLike = false;
+  const visitor = (() => {
+    let v = null; try { v = localStorage.getItem('sjVisitor'); } catch (e) {}
+    if (!v || !/^[0-9a-f-]{36}$/i.test(v)) {
+      v = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+      try { localStorage.setItem('sjVisitor', v); } catch (e) {}
+    }
+    return v;
+  })();
+  async function rpc(fn, args) {
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: ctl.signal });
+      const txt = await r.text(); let j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+      if (!r.ok) { const err = new Error((j && j.message) || 'failed'); err.code = j && j.code; throw err; }
+      return j;
+    } finally { clearTimeout(to); }
+  }
   function setStat(k, n) { const d = stat[k], v = String(n); d.classList.remove('na'); if (d.textContent !== v) { d.textContent = v; d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); } }
-  function offline() { const n = $('#liveNote'); n.hidden = false; Object.values(stat).forEach(d => d.classList.add('na')); n.textContent = 'Live counts, likes and reviews switch on once the site is on its own address.'; canWrite = false; }
+  function offline() { const n = $('#liveNote'); n.hidden = false; Object.values(stat).forEach(d => d.classList.add('na')); n.textContent = 'Live counts are taking a break. Try again in a moment.'; }
   function paintLike() { likeBtn.setAttribute('aria-pressed', liked ? 'true' : 'false'); likeText.textContent = liked ? 'You liked this site' : 'Like this site'; }
   function reviewCard(r) {
     const c = el('article', 'rev'), m = el('div', 'rev-meta');
     m.append(el('span', 'rev-name', r.name || 'Someone'), el('span', 'rev-proj', 'on ' + (r.project || 'the site')));
-    c.append(m, el('p', 'rev-text', r.text || '')); return c;
+    c.append(m, el('p', 'rev-text', r.body || '')); return c;
   }
-  function paintReviews() {
-    const ok = data.reviews.filter(r => data.approved[r.id] && data.approved[r.id].t === r.t).sort((a, b) => b.t - a.t);
-    setStat('reviews', ok.length);
+  function paintReviews(list) {
     revList.innerHTML = '';
-    if (!ok.length) { const e = el('div', 'empty'); e.append(el('p', 'empty-title', 'No reviews yet'), el('p', 'muted', 'Approved reviews show here, newest first.')); revList.appendChild(e); }
-    ok.forEach(r => revList.appendChild(reviewCard(r)));
-    if (isOwner) {
-      const pending = data.reviews.filter(r => !(data.approved[r.id] && data.approved[r.id].t === r.t));
-      modBox.hidden = !pending.length; modList.innerHTML = '';
-      pending.forEach(r => {
-        const c = reviewCard(r), a = el('div', 'mod-actions'), y = el('button', 'ok', 'Approve'), n = el('button', '', 'Remove');
-        y.type = n.type = 'button';
-        y.addEventListener('click', () => db.doc('approved/' + r.id).set({ t: r.t }).catch(() => {}));
-        n.addEventListener('click', () => db.doc('reviews/' + r.id).delete().catch(() => {}));
-        a.append(y, n); c.appendChild(a); modList.appendChild(c);
-      });
-    }
+    if (!list.length) { const e = el('div', 'empty'); e.append(el('p', 'empty-title', 'No reviews yet'), el('p', 'muted', 'Approved reviews show here, newest first.')); revList.appendChild(e); }
+    list.forEach(r => revList.appendChild(reviewCard(r)));
   }
+  function apply(site) {
+    if (!site) return; online = true; $('#liveNote').hidden = true;
+    setStat('visits', site.visits); setStat('likes', site.likes); setStat('reviews', site.reviews);
+    if (!busyLike) { liked = !!site.liked; paintLike(); }
+    paintReviews(site.list || []);
+  }
+  async function refresh() { try { apply(await rpc('get_site', { p_visitor: visitor })); } catch (e) { if (!online) offline(); } }
   async function initData() {
-    if (!(window.claude && claude.use)) return offline();
-    let user;
-    try { [db, user] = await Promise.all([claude.use('db'), claude.use('user')]); } catch (e) { db = null; }
-    if (!db) return offline();
-    try { uid = user ? await user.id() : null; isOwner = user ? !!(await user.isOwner()) : false; } catch (e) {}
-    const fail = () => {};
-    db.collection('visits').onSnapshot(s => setStat('visits', s.size), fail);
-    db.collection('likes').onSnapshot(s => { setStat('likes', s.size); liked = !!uid && s.docs.some(d => d.id === uid); paintLike(); }, fail);
-    db.collection('reviews').onSnapshot(s => { data.reviews = s.docs.map(d => Object.assign({ id: d.id }, d.data())); paintReviews(); }, fail);
-    db.collection('approved').onSnapshot(s => { data.approved = {}; s.docs.forEach(d => data.approved[d.id] = d.data()); paintReviews(); }, fail);
-    if (uid) { try { const v = await db.doc('visits/' + uid).get(); if (!v.exists) await db.doc('visits/' + uid).set({ t: Date.now() }); } catch (e) {} }
+    try { await rpc('record_visit', { p_visitor: visitor }); } catch (e) {}
+    await refresh();
+    setInterval(() => { if (!document.hidden) refresh(); }, 45000);
   }
   function burstHearts() {
     if (reduce || document.body.classList.contains('guide-off')) return;
@@ -252,14 +255,12 @@
   window.__likeFx = likeFx;
   likeBtn.addEventListener('click', async () => {
     SJ.Sound.unlock();
-    if (!db || !uid || !canWrite) { speak(lines.rvOff, { look: 'curious' }); return; }
-    likeBtn.disabled = true;
-    try {
-      const was = liked;
-      if (was) await db.doc('likes/' + uid).delete(); else await db.doc('likes/' + uid).set({ t: Date.now() });
-      likeFx(!was);
-    } catch (e) { canWrite = false; speak(lines.rvOff, { look: 'curious' }); }
-    likeBtn.disabled = false;
+    if (busyLike) return;
+    busyLike = true; likeBtn.disabled = true;
+    const want = !liked; liked = want; paintLike(); likeFx(want);
+    try { const r = await rpc('set_like', { p_visitor: visitor, p_liked: want }); if (r && typeof r.likes === 'number') setStat('likes', r.likes); }
+    catch (e) { liked = !want; paintLike(); speak(e.code === 'P0429' ? lines.rvLimit : lines.rvFail, { look: 'curious' }); }
+    busyLike = false; likeBtn.disabled = false;
   });
   const rvName = $('#rvName'), rvText = $('#rvText');
   let toldName = false, toldText = false;
@@ -272,12 +273,16 @@
     const name = rvName.value.trim(), text = rvText.value.trim(), project = $('#rvProject').value;
     if (!name) { rvName.classList.add('bad'); rvName.focus(); rvStatus.textContent = 'Add your name to post.'; speak(lines.rvNoName, { look: 'curious', watch: rvName }); return; }
     if (!text) { rvText.classList.add('bad'); rvText.focus(); rvStatus.textContent = 'Write a few words before posting.'; speak(lines.rvEmpty, { look: 'skeptic', watch: rvText }); return; }
-    if (!db || !uid || !canWrite) { rvStatus.textContent = 'Reviews can’t be saved here yet.'; speak(lines.rvOff, { look: 'curious' }); return; }
+    const btn = form.querySelector('button[type=submit]'); btn.disabled = true;
     try {
-      await db.doc('reviews/' + uid).set({ name: name.slice(0, 60), project, text: text.slice(0, 600), t: Date.now() });
+      await rpc('add_review', { p_visitor: visitor, p_name: name.slice(0, 60), p_project: project, p_body: text.slice(0, 600) });
       rvText.value = ''; rvStatus.textContent = 'Posted. It will appear once Sanjeev approves it.';
       SJ.hop(); SJ.spinKick(700); speak(lines.rvDone, { look: 'happy' });
-    } catch (err) { canWrite = false; rvStatus.textContent = 'Reviews can’t be saved here yet.'; speak(lines.rvOff, { look: 'curious' }); }
+    } catch (err) {
+      if (err.code === 'P0429') { rvStatus.textContent = 'That’s the limit for today. Thank you!'; speak(lines.rvLimit, { look: 'happy' }); }
+      else { rvStatus.textContent = 'That didn’t go through. Please try again.'; speak(lines.rvFail, { look: 'curious' }); }
+    }
+    btn.disabled = false;
   });
 
   /* ---------- start screen and intro ---------- */
