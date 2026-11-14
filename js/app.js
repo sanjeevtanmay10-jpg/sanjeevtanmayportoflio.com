@@ -287,20 +287,33 @@
 
   /* ---------- start screen and intro ---------- */
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  let skip = null, gateTimer = 0;
+  let skip = null, gateTimer = 0, gateIdle = 0;
   async function intro() {
     clearTimeout(gateTimer); introRunning = true; document.body.classList.add('intro'); document.body.classList.remove('hdr-in');
     /* reset the start screen so the intro can be replayed */
     gate.classList.remove('out'); $('#gateUi').classList.remove('gone');
     const gl0 = $('#gateLine'); gl0.classList.remove('show'); gl0.textContent = '';
     gate.hidden = false;
-    SJ.hush(); SJ.showFace(false); SJ.setAnchor($('#gateSpot'), 'gate'); SJ.place();
+    SJ.hush(); SJ.setAnchor($('#gateSpot'), 'gate'); SJ.place();
+    SJ.showFace(true); SJ.express('smile');
+    /* while waiting for "Come in": small looks and expressions so Sanju feels alive */
+    const idle = [
+      () => { SJ.lookToward($('#comeIn'), 1800); SJ.express('happy', 1400); },
+      () => { SJ.lookAt(-.75, -.15, 1300); },
+      () => { SJ.lookAt(.75, -.1, 1300); SJ.express('curious', 1300); },
+      () => { SJ.lookToward($('#comeIn'), 1600); SJ.express('wink', 900); SJ.spinKick(260); },
+      () => { SJ.lookToward($('#gateUi'), 1500); SJ.express('smile'); }
+    ];
+    let idleI = 0;
+    clearInterval(gateIdle);
+    SJ.lookToward($('#comeIn'), 1500);
+    gateIdle = setInterval(() => { if (!introRunning || $('#gateUi').classList.contains('gone')) return clearInterval(gateIdle); idle[idleI++ % idle.length](); }, 2600);
     let wantSound = SJ.Sound.on;
     $$('[data-gate-sound]').forEach(b => { b.setAttribute('aria-pressed', (b.dataset.gateSound === 'on') === wantSound ? 'true' : 'false'); b.onclick = () => { wantSound = b.dataset.gateSound === 'on'; $$('[data-gate-sound]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }; });
     const comeIn = $('#comeIn'); comeIn.focus({ preventScroll: true });
     let done = false;
     const finish = () => {
-      if (done) return; done = true; SJ.hush();
+      if (done) return; done = true; clearInterval(gateIdle); SJ.hush();
       store.set('sjSeen', '1'); gate.classList.add('out'); document.body.classList.remove('intro', 'hdr-in');
       introRunning = false; SJ.showFace(true); SJ.express('smile'); paintSound();
       gateTimer = setTimeout(() => { gate.hidden = true; }, 950);
@@ -309,7 +322,7 @@
     $('#skipIntro').onclick = () => { SJ.Sound.unlock(); SJ.Sound.set(wantSound); finish(); };
     await new Promise(res => { comeIn.onclick = () => { comeIn.onclick = null; res(); }; });
     if (done) return;
-    SJ.Sound.unlock(); SJ.Sound.set(wantSound);
+    clearInterval(gateIdle); SJ.Sound.unlock(); SJ.Sound.set(wantSound);
     $('#gateUi').classList.add('gone');
     const alive = async ms => { await wait(ms); return !done; };
     const gl = $('#gateLine');
