@@ -18,24 +18,49 @@
   };
 
   /* ---------- sound ---------- */
+  const VOICE = window.SANJU_VOICE || {};
+  const VOICE_BY_FILE = {}; Object.keys(VOICE).forEach(t => { VOICE_BY_FILE[VOICE[t].f] = t; });
   const Sound = {
-    on: true, ctx: null, master: null, tts: null, unlocked: false,
+    on: true, ctx: null, master: null, voiceOut: null, analyser: null, unlocked: false,
+    bufs: {}, loading: {},
     unlock() {
-      if (this.unlocked) return;
+      if (this.unlocked) { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); return; }
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AC(); this.master = this.ctx.createGain();
         this.master.gain.value = this.on ? 0.5 : 0; this.master.connect(this.ctx.destination);
+        /* recorded voice: louder than the little effect sounds, and measured for the mouth */
+        this.voiceOut = this.ctx.createGain(); this.voiceOut.gain.value = 1.8;
+        this.analyser = this.ctx.createAnalyser(); this.analyser.fftSize = 512; this._lv = new Float32Array(512);
+        this.voiceOut.connect(this.analyser); this.analyser.connect(this.master);
         if (this.ctx.state === 'suspended') this.ctx.resume();
         this.unlocked = true;
+        this.preload(['intro1', 'intro2', 'hero', 'about'].map(k => VOICE_BY_FILE[k + '.mp3']).filter(Boolean));
+        setTimeout(() => this.preload(Object.keys(VOICE)), 6000);
       } catch (e) {}
-      if (window.claude && claude.use) claude.use('tts').then(t => { this.tts = t; if (t && this._hook) this._hook(t); }).catch(() => {});
     },
     set(on) {
       this.on = on;
       if (this.master) this.master.gain.setTargetAtTime(on ? 0.5 : 0, this.ctx.currentTime, 0.03);
-      if (!on && this.tts) { try { this.tts.stop(); } catch (e) {} }
       try { localStorage.setItem('sjSound', on ? '1' : '0'); } catch (e) {}
+    },
+    /* fetch + decode one recorded line; resolves to an AudioBuffer or null */
+    load(text) {
+      const v = VOICE[text]; if (!v || !this.ctx) return Promise.resolve(null);
+      if (this.bufs[v.f]) return Promise.resolve(this.bufs[v.f]);
+      if (!this.loading[v.f]) {
+        this.loading[v.f] = fetch('audio/' + v.f).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+          .then(a => new Promise((res, rej) => { const p = this.ctx.decodeAudioData(a, res, rej); if (p && p.then) p.then(res, rej); }))
+          .then(b => (this.bufs[v.f] = b)).catch(() => { delete this.loading[v.f]; return null; });
+      }
+      return this.loading[v.f];
+    },
+    preload(texts) { texts.forEach((t, i) => setTimeout(() => this.load(t), i * 120)); },
+    level() {
+      if (!this.analyser) return 0; const a = this._lv;
+      if (this.analyser.getFloatTimeDomainData) this.analyser.getFloatTimeDomainData(a);
+      else { const b = new Uint8Array(a.length); this.analyser.getByteTimeDomainData(b); for (let i = 0; i < b.length; i++) a[i] = (b[i] - 128) / 128; }
+      let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * a[i]; return Math.sqrt(s / a.length);
     },
     tone(f0, f1, dur, type = 'sine', vol = 0.25, delay = 0) {
       if (!this.unlocked || !this.on) return;
@@ -89,23 +114,36 @@
   /* ---------- speaking ---------- */
   let sayToken = 0;
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  const RATE = 1.05;
   function fill(el, text, on) {
     el.textContent = '';
     const words = text.split(' ').map(w => { const s = document.createElement('span'); s.className = on ? 'w on' : 'w'; s.textContent = w; el.appendChild(s); el.appendChild(document.createTextNode(' ')); return s; });
     el.classList.add('show'); return words;
   }
-  /* the voice reports how far it has got; text and mouth follow that, not a timer */
-  const V = { ms: 0, at: 0, started: false, state: 'idle', callAt: 0 };
-  function hookVoice(t) {
-    try { t.onPosition(({ ms }) => { const now = performance.now(); if (!(ms > 0) || now - V.callAt < 120) return; if (!V.started && ms > 900) return; V.ms = ms; V.at = now; V.started = true; }); } catch (e) {}
-    try { t.onState(({ state }) => { V.state = state; }); } catch (e) {}
-  }
-  function stopVoice() { if (Sound.tts) { try { Sound.tts.stop(); } catch (e) {} } }
-  function timeline(words) {
-    let t = 0; const starts = [], durs = [];
-    words.forEach(s => { const w = s.textContent, d = (85 + 58 * w.replace(/[^\w']/g, '').length) / RATE; starts.push(t); durs.push(d); t += d + (/[.!?]$/.test(w) ? 320 : /,$/.test(w) ? 160 : 0) / RATE; });
-    return { starts, durs, total: t };
+  /* recorded voice: words and mouth follow the audio clock, so they cannot drift */
+  let voiceSrc = null;
+  function stopVoice() { if (voiceSrc) { try { voiceSrc.onended = null; voiceSrc.stop(); } catch (e) {} voiceSrc = null; } }
+  async function spoken(text, words, my) {
+    const v = VOICE[text];
+    if (!v || !Sound.on || !Sound.unlocked) return false;
+    if (Sound.ctx.state === 'suspended') { try { await Sound.ctx.resume(); } catch (e) {} }
+    const buf = await Promise.race([Sound.load(text), wait(2500).then(() => null)]);
+    if (!buf || my !== sayToken || !Sound.on) return false;
+    stopVoice();
+    const c = Sound.ctx, src = c.createBufferSource(); src.buffer = buf; src.connect(Sound.voiceOut);
+    let ended = false; src.onended = () => { ended = true; };
+    const t0 = c.currentTime + 0.03; src.start(t0); voiceSrc = src;
+    S.talking = true; S.mouthMode = 'voice';
+    const endMs = v.d + 60;
+    while (my === sayToken && !ended) {
+      const ms = (c.currentTime - t0) * 1000;
+      for (let i = 0; i < words.length; i++) if ((v.w[i] ?? 0) <= ms) words[i].classList.add('on');
+      const lv = Sound.level(); S.mouthLv = lv; S.mouthOpen = lv > 0.03;
+      if (ms > endMs) break;
+      await wait(30);
+    }
+    S.mouthOpen = false;
+    if (voiceSrc === src) voiceSrc = null;
+    return my === sayToken;
   }
   async function timed(words, my, silent) {
     for (let i = 0; i < words.length; i++) {
@@ -125,34 +163,12 @@
     S.talking = false; S.mouthMode = 'timer'; express('smile');
     if (opts.watch) lookToward(opts.watch, 4000);
     let done = false;
-    if (Sound.on && Sound.unlocked && Sound.tts) {
-      V.started = false; V.ms = 0; V.callAt = performance.now();
-      let ended = false, failed = false, p = null;
-      try { p = Sound.tts.speak(text, { voice: 'airy', rate: RATE, language: 'en' }); } catch (e) { failed = true; }
-      if (p && p.then) p.then(() => { ended = true; }, () => { if (!V.started) failed = true; ended = true; });
-      const tl = timeline(words), t0 = performance.now();
-      while (my === sayToken) {
-        if (!V.started) {
-          if (failed) break;
-          if (ended) { done = true; break; }
-          if (performance.now() - t0 > 3000) {
-            if (V.state === 'speaking') { S.talking = true; if (!(await timed(words, my, true))) return false; done = true; }
-            else stopVoice();
-            break;
-          }
-          await wait(40); continue;
-        }
-        S.talking = true; S.mouthMode = 'voice';
-        const ms = V.ms + Math.min(350, performance.now() - V.at);
-        let cur = -1;
-        for (let i = 0; i < words.length; i++) { if (tl.starts[i] <= ms) { words[i].classList.add('on'); cur = i; } else break; }
-        S.mouthOpen = cur >= 0 && ms < tl.starts[cur] + tl.durs[cur] && ((ms - tl.starts[cur]) % 180) < 105;
-        if (ended || ms > tl.total + 2500) { done = true; break; }
-        await wait(33);
-      }
+    if (VOICE[text] && Sound.on && Sound.unlocked) {
+      done = await spoken(text, words, my);
       if (my !== sayToken) return false;
     }
-    if (!done) { S.talking = true; S.mouthMode = 'timer'; await wait(140); if (!(await timed(words, my, false))) return false; }
+    /* no recording (or sound off): silent word-by-word reveal; soft blips only if a line has no recording */
+    if (!done) { S.talking = true; S.mouthMode = 'timer'; await wait(140); if (!(await timed(words, my, !(Sound.on && !VOICE[text])))) return false; }
     words.forEach(w => w.classList.add('on'));
     S.talking = false; S.mouthMode = 'timer'; setMouth('smile');
     if (opts.look) express(opts.look, 1700);
@@ -228,7 +244,7 @@
     const blink = now < S.blinkEnd ? 0.08 : 1;
     [[eyeL, 42], [eyeR, 58]].forEach(([e, cx]) => e.setAttribute('transform', `translate(${cx} 51) scale(${narrow.toFixed(3)} ${(blink * (+e.dataset.sy || 1)).toFixed(3)})`));
     /* mouth while talking */
-    if (S.talking) { const open = S.mouthMode === 'voice' ? !!S.mouthOpen : (now - (S.mouthBeat || 0)) < 110; mouth.classList.toggle('open', open); if (open) mOpen.setAttribute('ry', 2.4); }
+    if (S.talking) { const open = S.mouthMode === 'voice' ? !!S.mouthOpen : (now - (S.mouthBeat || 0)) < 110; mouth.classList.toggle('open', open); if (open) mOpen.setAttribute('ry', S.mouthMode === 'voice' ? (1.5 + Math.min(2.1, (S.mouthLv || 0) * 22)).toFixed(2) : 2.4); }
     if (S.exprUntil && now > S.exprUntil && !S.talking) express('smile');
     requestAnimationFrame(frame);
   }
@@ -238,7 +254,6 @@
   express('smile');
   requestAnimationFrame(frame);
 
-  Sound._hook = hookVoice;
   window.Sanju = {
     S, Sound, say, hush, fill, token: () => sayToken, express, lookAt, lookToward, setAnchor, place, hop, spinKick, body, root,
     showFace(on) { root.classList.toggle('face', on); },

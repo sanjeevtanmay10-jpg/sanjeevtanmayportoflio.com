@@ -226,7 +226,7 @@ main{padding-top:86px}
 .sj-petals{position:absolute;inset:0;transform-origin:49.8% 52.3%;will-change:transform}
 .sj-petals img,.sj-core{position:absolute;inset:0;width:100%;height:100%;user-select:none;-webkit-user-drag:none}
 .sj-core{clip-path:circle(25.6% at 49.8% 52.3%)}
-.sj-sheen{position:absolute;inset:0;-webkit-mask:url(../img/sanju.png) center/100% 100% no-repeat;mask:url(../img/sanju.png) center/100% 100% no-repeat;background:conic-gradient(from var(--sheen,0deg) at 50% 52%,rgba(255,255,255,0) 0deg,rgba(150,255,250,.55) 40deg,rgba(255,255,255,0) 95deg,rgba(255,170,255,.5) 170deg,rgba(255,255,255,0) 230deg,rgba(255,240,170,.42) 300deg,rgba(255,255,255,0) 360deg);mix-blend-mode:soft-light}
+.sj-sheen{position:absolute;inset:0;-webkit-mask:url(../img/sanju.webp) center/100% 100% no-repeat;mask:url(../img/sanju.webp) center/100% 100% no-repeat;background:conic-gradient(from var(--sheen,0deg) at 50% 52%,rgba(255,255,255,0) 0deg,rgba(150,255,250,.55) 40deg,rgba(255,255,255,0) 95deg,rgba(255,170,255,.5) 170deg,rgba(255,255,255,0) 230deg,rgba(255,240,170,.42) 300deg,rgba(255,255,255,0) 360deg);mix-blend-mode:soft-light}
 .sj-gloss{position:absolute;inset:0;clip-path:circle(25.6% at 49.8% 52.3%);background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.55) 48%,rgba(255,255,255,0) 62%);background-size:300% 100%;animation:sjGloss 6.5s ease-in-out infinite;mix-blend-mode:soft-light}
 @keyframes sjGloss{0%,55%{background-position:120% 0}100%{background-position:-60% 0}}
 .sj-face{position:absolute;inset:0;width:100%;height:100%;overflow:visible;opacity:0;transition:opacity .5s ease}
