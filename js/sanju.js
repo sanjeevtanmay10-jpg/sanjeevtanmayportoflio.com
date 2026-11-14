@@ -49,7 +49,7 @@
       const v = VOICE[text]; if (!v || !this.ctx) return Promise.resolve(null);
       if (this.bufs[v.f]) return Promise.resolve(this.bufs[v.f]);
       if (!this.loading[v.f]) {
-        this.loading[v.f] = fetch('audio/' + v.f).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+        this.loading[v.f] = fetch(/^https?:/.test(v.f) ? v.f : 'audio/' + v.f).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
           .then(a => new Promise((res, rej) => { const p = this.ctx.decodeAudioData(a, res, rej); if (p && p.then) p.then(res, rej); }))
           .then(b => (this.bufs[v.f] = b)).catch(() => { delete this.loading[v.f]; return null; });
       }
@@ -167,8 +167,8 @@
       done = await spoken(text, words, my);
       if (my !== sayToken) return false;
     }
-    /* no recording (or sound off): silent word-by-word reveal; soft blips only if a line has no recording */
-    if (!done) { S.talking = true; S.mouthMode = 'timer'; await wait(140); if (!(await timed(words, my, !(Sound.on && !VOICE[text])))) return false; }
+    /* no recording, or sound off: silent word-by-word reveal (never the old blip voice) */
+    if (!done) { S.talking = true; S.mouthMode = 'timer'; await wait(140); if (!(await timed(words, my, true))) return false; }
     words.forEach(w => w.classList.add('on'));
     S.talking = false; S.mouthMode = 'timer'; setMouth('smile');
     if (opts.look) express(opts.look, 1700);
