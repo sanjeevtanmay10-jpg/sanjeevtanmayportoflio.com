@@ -352,6 +352,22 @@
     route(true); intro();
   });
 
+  /* ---------- home icon: back to the top, and Sanju gives the hero line again ---------- */
+  $('a.round[aria-label="Home"]').addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    if (introRunning) return;
+    const hero = $('#home .seat[data-seat="hero"]');
+    saidHome.delete('home:hero'); said.delete('home:hero'); if (hero) hero.dataset.done = '';
+    if (currentView === 'home') { closeMenu(); SJ.hush(); window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); if (location.hash && location.hash !== '#top') history.pushState(null, '', '#top'); }
+    else { history.pushState(null, '', '#top'); route(false); window.scrollTo(0, 0); }
+    const t0 = performance.now();
+    const wait = () => {
+      if (scrollY > 4 && performance.now() - t0 < 2500) return requestAnimationFrame(wait);
+      if (hero && !said.has('home:hero') && pendSeat !== hero) { pickAnchor(true); arrive(hero); }
+    };
+    requestAnimationFrame(wait);
+  });
+
   /* ---------- go ---------- */
   initData();
   const startsOnProject = projects.some(p => '#' + p.id === location.hash);
