@@ -287,23 +287,27 @@
 
   /* ---------- start screen and intro ---------- */
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  let skip = null;
+  let skip = null, gateTimer = 0;
   async function intro() {
-    introRunning = true; document.body.classList.add('intro'); gate.hidden = false;
-    SJ.showFace(false); SJ.setAnchor($('#gateSpot'), 'gate'); SJ.place();
+    clearTimeout(gateTimer); introRunning = true; document.body.classList.add('intro'); document.body.classList.remove('hdr-in');
+    /* reset the start screen so the intro can be replayed */
+    gate.classList.remove('out'); $('#gateUi').classList.remove('gone');
+    const gl0 = $('#gateLine'); gl0.classList.remove('show'); gl0.textContent = '';
+    gate.hidden = false;
+    SJ.hush(); SJ.showFace(false); SJ.setAnchor($('#gateSpot'), 'gate'); SJ.place();
     let wantSound = SJ.Sound.on;
-    $$('[data-gate-sound]').forEach(b => { b.setAttribute('aria-pressed', (b.dataset.gateSound === 'on') === wantSound ? 'true' : 'false'); b.addEventListener('click', () => { wantSound = b.dataset.gateSound === 'on'; $$('[data-gate-sound]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }); });
+    $$('[data-gate-sound]').forEach(b => { b.setAttribute('aria-pressed', (b.dataset.gateSound === 'on') === wantSound ? 'true' : 'false'); b.onclick = () => { wantSound = b.dataset.gateSound === 'on'; $$('[data-gate-sound]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }; });
     const comeIn = $('#comeIn'); comeIn.focus({ preventScroll: true });
     let done = false;
     const finish = () => {
       if (done) return; done = true; SJ.hush();
       store.set('sjSeen', '1'); gate.classList.add('out'); document.body.classList.remove('intro', 'hdr-in');
       introRunning = false; SJ.showFace(true); SJ.express('smile'); paintSound();
-      setTimeout(() => { gate.hidden = true; }, 950);
+      gateTimer = setTimeout(() => { gate.hidden = true; }, 950);
       SJ.S.placed = true; pickAnchor(true); observeReveals();
     };
-    $('#skipIntro').addEventListener('click', () => { SJ.Sound.unlock(); SJ.Sound.set(wantSound); finish(); });
-    await new Promise(res => comeIn.addEventListener('click', res, { once: true }));
+    $('#skipIntro').onclick = () => { SJ.Sound.unlock(); SJ.Sound.set(wantSound); finish(); };
+    await new Promise(res => { comeIn.onclick = () => { comeIn.onclick = null; res(); }; });
     if (done) return;
     SJ.Sound.unlock(); SJ.Sound.set(wantSound);
     $('#gateUi').classList.add('gone');
@@ -326,6 +330,14 @@
     gl.classList.remove('show');
     finish();
   }
+
+  /* ---------- tapping the photo or name replays the start screen and Sanju's intro ---------- */
+  $('.brand').addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    if (introRunning) return;
+    if (location.hash !== '' && location.hash !== '#top') history.pushState(null, '', '#top');
+    route(true); intro();
+  });
 
   /* ---------- go ---------- */
   initData();
