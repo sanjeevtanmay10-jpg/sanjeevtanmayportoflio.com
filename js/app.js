@@ -108,7 +108,8 @@
   function paintSound() { soundBtn.setAttribute('aria-pressed', SJ.Sound.on ? 'true' : 'false'); soundBtn.setAttribute('aria-label', SJ.Sound.on ? 'Mute Sanju' : 'Turn on Sanju’s sound'); }
   soundBtn.addEventListener('click', () => { SJ.Sound.unlock(); SJ.Sound.set(!SJ.Sound.on); paintSound(); if (SJ.Sound.on) SJ.Sound.mm(); });
   paintSound();
-  addEventListener('pointerdown', () => SJ.Sound.unlock(), { once: true, passive: true });
+  /* every tap or key press keeps the audio engine awake (and rebuilds it if the browser broke it) */
+  ['pointerdown', 'keydown'].forEach(t => addEventListener(t, () => SJ.Sound.unlock(), { passive: true }));
   addEventListener('keydown', () => SJ.Sound.unlock(), { once: true });
 
   /* ---------- guide on/off ---------- */

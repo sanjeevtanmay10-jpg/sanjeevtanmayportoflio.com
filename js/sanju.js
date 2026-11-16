@@ -23,11 +23,22 @@
   const Sound = {
     on: true, ctx: null, master: null, voiceOut: null, analyser: null, unlocked: false,
     bufs: {}, loading: {},
+    broken: false,
+    /* rebuild the audio engine if the browser broke it (e.g. headphones or the sound device changed) */
+    rebuild() {
+      try { if (this.ctx && this.ctx.state !== 'closed') this.ctx.close(); } catch (e) {}
+      this.ctx = null; this.unlocked = false; this.broken = false;
+      this.unlock();
+    },
     unlock() {
-      if (this.unlocked) { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); return; }
+      if (this.unlocked && (this.broken || !this.ctx || this.ctx.state === 'closed' || this.ctx.state === 'interrupted')) return this.rebuild();
+      if (this.unlocked) { if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); return; }
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AC(); this.master = this.ctx.createGain();
+        this.ctx = new AC();
+        this.ctx.onerror = () => { this.broken = true; };
+        this.ctx.onstatechange = () => { if (this.ctx && (this.ctx.state === 'closed' || this.ctx.state === 'interrupted')) this.broken = true; };
+        this.master = this.ctx.createGain();
         this.master.gain.value = this.on ? 0.5 : 0; this.master.connect(this.ctx.destination);
         /* recorded voice: louder than the little effect sounds, and measured for the mouth */
         this.voiceOut = this.ctx.createGain(); this.voiceOut.gain.value = 1.8;
@@ -35,14 +46,13 @@
         this.voiceOut.connect(this.analyser); this.analyser.connect(this.master);
         if (this.ctx.state === 'suspended') this.ctx.resume();
         this.unlocked = true;
-        this.preload(['intro1', 'intro2', 'hero', 'about'].map(k => VOICE_BY_FILE[k + '.mp3']).filter(Boolean));
-        setTimeout(() => this.preload(Object.keys(VOICE)), 6000);
+        if (!this._preloaded) { this._preloaded = true; this.preload(['intro1', 'intro2', 'hero', 'about'].map(k => VOICE_BY_FILE[k + '.mp3']).filter(Boolean)); setTimeout(() => this.preload(Object.keys(VOICE)), 6000); }
       } catch (e) {}
     },
     set(on) {
       this.on = on;
       if (this.master) this.master.gain.setTargetAtTime(on ? 0.5 : 0, this.ctx.currentTime, 0.03);
-      try { localStorage.setItem('sjSound', on ? '1' : '0'); } catch (e) {}
+      try { sessionStorage.setItem('sjSound', on ? '1' : '0'); } catch (e) {}
     },
     /* fetch + decode one recorded line; resolves to an AudioBuffer or null */
     load(text) {
@@ -86,7 +96,8 @@
       const g = c.createGain(); g.gain.value = 0.18; n.buffer = b; n.connect(f); f.connect(g); g.connect(this.master); n.start();
     }
   };
-  try { if (localStorage.getItem('sjSound') === '0') Sound.on = false; } catch (e) {}
+  /* sound starts ON for every new visit; muting only lasts for this visit */
+  try { localStorage.removeItem('sjSound'); if (sessionStorage.getItem('sjSound') === '0') Sound.on = false; } catch (e) {}
 
   /* ---------- face ---------- */
   function setEyes(l, r) { [[eyeL, l], [eyeR, r]].forEach(([e, k]) => { e.classList.toggle('arc', k === 'arc'); e.classList.toggle('line', k === 'line'); e.dataset.sy = k === 'wide' ? 1.16 : k === 'sleepy' ? 0.55 : 1; }); }
@@ -125,7 +136,10 @@
   async function spoken(text, words, my) {
     const v = VOICE[text];
     if (!v || !Sound.on || !Sound.unlocked) return false;
-    if (Sound.ctx.state === 'suspended') { try { await Sound.ctx.resume(); } catch (e) {} }
+    if (Sound.broken || !Sound.ctx || Sound.ctx.state === 'closed' || Sound.ctx.state === 'interrupted') Sound.rebuild();
+    if (!Sound.ctx) return false;
+    if (Sound.ctx.state === 'suspended') { try { await Promise.race([Sound.ctx.resume(), wait(400)]); } catch (e) {} }
+    if (Sound.ctx.state !== 'running') return false;
     const buf = await Promise.race([Sound.load(text), wait(2500).then(() => null)]);
     if (!buf || my !== sayToken || !Sound.on) return false;
     stopVoice();
@@ -134,7 +148,11 @@
     const t0 = c.currentTime + 0.03; src.start(t0); voiceSrc = src;
     S.talking = true; S.mouthMode = 'voice';
     const endMs = v.d + 60;
+    let lastT = c.currentTime, lastMove = performance.now(), stalled = false;
     while (my === sayToken && !ended) {
+      /* if the audio clock stops (device error), give up on the voice instead of freezing */
+      if (c.currentTime !== lastT) { lastT = c.currentTime; lastMove = performance.now(); }
+      else if (performance.now() - lastMove > 700) { stalled = true; Sound.broken = true; try { src.stop(); } catch (e) {} break; }
       const ms = (c.currentTime - t0) * 1000;
       for (let i = 0; i < words.length; i++) if ((v.w[i] ?? 0) <= ms) words[i].classList.add('on');
       const lv = Sound.level(); S.mouthLv = lv; S.mouthOpen = lv > 0.03;
@@ -143,6 +161,7 @@
     }
     S.mouthOpen = false;
     if (voiceSrc === src) voiceSrc = null;
+    if (stalled) return false;
     return my === sayToken;
   }
   async function timed(words, my, silent) {
