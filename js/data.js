@@ -2,6 +2,8 @@ window.SITE={
  "projects": [
   {
    "id": "splitright",
+   "link": "https://www.figma.com/proto/4qYr44Y1hs50RJsH81j7LQ/Final-main-sr-screen?node-id=8-99&page-id=0%3A1&starting-point-node-id=1%3A2&t=WWZwFLAWAFPcEG4d-1",
+   "linkLabel": "Try the prototype",
    "n": "01",
    "name": "SplitRight",
    "cover": "cover-splitright.jpg",
@@ -124,6 +126,8 @@ window.SITE={
   },
   {
    "id": "atelier",
+   "link": "https://atelier-sajneev.netlify.app/",
+   "linkLabel": "Visit the live site",
    "n": "03",
    "name": "Atelier",
    "cover": "cover-atelier.jpg",
@@ -182,6 +186,8 @@ window.SITE={
   },
   {
    "id": "forward-2027",
+   "link": "https://www.figma.com/proto/AtlCMnfhy8oyr4xhwLTS4m/Untitled?node-id=7-247&page-id=0%3A1&starting-point-node-id=6%3A28&content-scaling=responsive&t=NaPCKbMH4S79dTbC-1",
+   "linkLabel": "Try the prototype",
    "n": "04",
    "name": "Forward 2027",
    "cover": "cover-forward.jpg",

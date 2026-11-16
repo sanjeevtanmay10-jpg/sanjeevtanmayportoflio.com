@@ -8,13 +8,24 @@
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const ARROW = '<svg class="go" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
 
+  const EXT = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+  function extLink(p, cls) {
+    const l = el('a', cls); l.href = p.link; l.target = '_blank'; l.rel = 'noopener noreferrer';
+    l.innerHTML = `<span>${p.linkLabel}</span>` + EXT; l.setAttribute('aria-label', p.linkLabel + ' for ' + p.name + ' (opens in a new tab)');
+    return l;
+  }
+
   /* ---------- project cards ---------- */
   const cards = $('#cards');
   projects.forEach(p => {
-    const a = el('a', 'card reveal'); a.href = '#' + p.id; a.dataset.proj = p.id;
+    /* the whole card opens the case study; the small link button opens the live site / prototype in a new tab */
+    const a = el('article', 'card reveal'); a.dataset.proj = p.id;
     const im = el('div', 'card-img'); const img = el('img'); img.src = 'img/' + p.cover; img.alt = p.alt; img.loading = 'lazy'; im.appendChild(img);
-    const h = el('h3'); h.innerHTML = `<span class="num">${p.n}</span>`; h.appendChild(document.createTextNode(p.name)); h.insertAdjacentHTML('beforeend', ARROW);
-    a.append(im, h, el('p', '', p.line)); cards.appendChild(a);
+    const h = el('h3'); const main = el('a', 'card-main'); main.href = '#' + p.id;
+    main.innerHTML = `<span class="num">${p.n}</span>`; main.appendChild(document.createTextNode(p.name)); h.appendChild(main); h.insertAdjacentHTML('beforeend', ARROW);
+    a.append(im, h, el('p', '', p.line));
+    if (p.link) a.appendChild(extLink(p, 'card-link'));
+    cards.appendChild(a);
     const tell = () => { if (SJ.S.anchorKind === 'projects' && !introRunning) speak(p.hover, { look: 'wink', watch: a }); };
     a.addEventListener('pointerenter', tell); a.addEventListener('focus', tell);
   });
@@ -35,11 +46,13 @@
     const end = el('div', 'wrap');
     end.innerHTML = `<div class="seat" data-seat="proj-end" data-look="wink" style="margin-top:56px"><span class="seat-spot"></span><p class="seat-line" aria-live="polite"></p></div>`;
     const btns = el('div', 'proj-end');
+    if (p.link) btns.appendChild(extLink(p, 'btn btn-line'));
     if (next) { const n = el('a', 'btn btn-dark', 'Next: ' + next.name); n.href = '#' + next.id; btns.appendChild(n); }
     const b = el('a', 'btn btn-line', 'Back to all projects'); b.href = '#projects'; btns.appendChild(b);
     const r = el('a', 'btn btn-line', 'Leave a review'); r.href = '#reviews'; btns.appendChild(r);
     end.appendChild(btns);
-    s.append(h, sum, dl); const sw = el('div', 'wrap'); sw.appendChild(study); projView.append(s, sw, end);
+    s.append(h, sum, dl);
+    if (p.link) { const lk = extLink(p, 'btn btn-dark proj-link reveal'); s.appendChild(lk); } const sw = el('div', 'wrap'); sw.appendChild(study); projView.append(s, sw, end);
     projView.dataset.top = p.top; projView.dataset.end = p.end; projView.dataset.name = p.name;
     document.title = p.name + ' — Sanjeev Tanmay';
   }
