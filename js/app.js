@@ -216,6 +216,15 @@
       return j;
     } finally { clearTimeout(to); }
   }
+  /* send browser errors to the database (rate-limited) so silent failures can be found later */
+  let errCount = 0;
+  function reportError(err, where) {
+    if (errCount++ > 5) return;
+    const msg = (where ? where + ': ' : '') + (err && (err.message || err.reason) ? (err.message || String(err.reason)) : String(err));
+    try { fetch(SB_URL + '/rest/v1/rpc/log_client_error', { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_msg: msg, p_ua: navigator.userAgent, p_page: location.hash || '/' }), keepalive: true }).catch(() => {}); } catch (e) {}
+  }
+  addEventListener('error', e => reportError(e.error || e.message));
+  addEventListener('unhandledrejection', e => reportError(e.reason));
   function setStat(k, n) { const d = stat[k], v = String(n); d.classList.remove('na'); if (d.textContent !== v) { d.textContent = v; d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); } }
   function offline() { const n = $('#liveNote'); n.hidden = false; Object.values(stat).forEach(d => d.classList.add('na')); n.textContent = 'Live counts are taking a break. Try again in a moment.'; }
   function paintLike() { likeBtn.setAttribute('aria-pressed', liked ? 'true' : 'false'); likeText.textContent = liked ? 'You liked this site' : 'Like this site'; }
@@ -282,21 +291,25 @@
   rvText.addEventListener('focus', () => { if (!toldText && SJ.S.anchorKind === 'reviews') { toldText = true; speak(lines.rvText, { look: 'wink', watch: rvText }); } });
   rvText.addEventListener('input', () => { SJ.lookToward(rvText, 900); rvText.classList.remove('bad'); });
   rvName.addEventListener('input', () => rvName.classList.remove('bad'));
+  /* run Sanju's reactions without ever letting them break the form */
+  const safe = fn => { try { fn(); } catch (err) { reportError(err); } };
   form.addEventListener('submit', async e => {
-    e.preventDefault(); SJ.Sound.unlock();
+    e.preventDefault();
     const name = rvName.value.trim(), text = rvText.value.trim(), project = $('#rvProject').value;
-    if (!name) { rvName.classList.add('bad'); rvName.focus(); rvStatus.textContent = 'Add your name to post.'; speak(lines.rvNoName, { look: 'curious', watch: rvName }); return; }
-    if (!text) { rvText.classList.add('bad'); rvText.focus(); rvStatus.textContent = 'Write a few words before posting.'; speak(lines.rvEmpty, { look: 'skeptic', watch: rvText }); return; }
-    const btn = form.querySelector('button[type=submit]'); btn.disabled = true;
+    if (!name) { rvName.classList.add('bad'); rvName.focus(); rvStatus.textContent = 'Add your name to post.'; safe(() => speak(lines.rvNoName, { look: 'curious', watch: rvName })); return; }
+    if (!text) { rvText.classList.add('bad'); rvText.focus(); rvStatus.textContent = 'Write a few words before posting.'; safe(() => speak(lines.rvEmpty, { look: 'skeptic', watch: rvText })); return; }
+    const btn = form.querySelector('button[type=submit]'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Sending…'; rvStatus.textContent = 'Sending your review…';
     try {
+      /* send first: sound and animation come after, so they can't stop the review from going out */
       await rpc('add_review', { p_visitor: visitor, p_name: name.slice(0, 60), p_project: project, p_body: text.slice(0, 600) });
-      rvText.value = ''; rvStatus.textContent = 'Posted. It will appear once Sanjeev approves it.';
-      SJ.hop(); SJ.spinKick(700); speak(lines.rvDone, { look: 'happy' });
+      rvText.value = ''; rvStatus.textContent = 'Posted! It will appear here once Sanjeev approves it.';
+      safe(() => { SJ.Sound.unlock(); SJ.hop(); SJ.spinKick(700); speak(lines.rvDone, { look: 'happy' }); });
     } catch (err) {
-      if (err.code === 'P0429') { rvStatus.textContent = 'That’s the limit for today. Thank you!'; speak(lines.rvLimit, { look: 'happy' }); }
-      else { rvStatus.textContent = 'That didn’t go through. Please try again.'; speak(lines.rvFail, { look: 'curious' }); }
+      if (err.code === 'P0429') { rvStatus.textContent = 'That’s the limit for today. Thank you!'; safe(() => speak(lines.rvLimit, { look: 'happy' })); }
+      else { reportError(err, 'add_review'); rvStatus.textContent = 'That didn’t go through. Please check your connection and try again.'; safe(() => speak(lines.rvFail, { look: 'curious' })); }
     }
-    btn.disabled = false;
+    btn.disabled = false; btn.textContent = label;
   });
 
   /* ---------- start screen and intro ---------- */
