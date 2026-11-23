@@ -301,3 +301,24 @@ main{padding-top:86px}
 .card-link:hover,.card-link:focus-visible{background:var(--ink);color:var(--bg);outline:none}
 .card-link svg{flex:none}
 .proj-link{display:inline-flex;align-items:center;gap:10px;margin:-8px 0 48px}
+
+/* start screen: who this is (top-left) */
+.gate-brand{position:absolute;left:32px;top:20px;display:flex;align-items:center;gap:14px;transition:opacity .5s ease}
+.gate-brand img{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 6px 16px -6px rgba(18,20,19,.45);border:2px solid #fff}
+.gate-brand strong{display:block;font-family:var(--disp);font-weight:700;font-size:20px;letter-spacing:-.01em;color:var(--ink)}
+.gate-brand span{display:block;color:var(--ink2);font-size:16px}
+body.hdr-in .gate-brand{opacity:0}
+/* home: intro line + button under the name */
+.hero-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px 48px;margin-top:40px;max-width:1100px;padding-top:0;border-top:0}
+.hero-intro{font-size:clamp(19px,2vw,24px);line-height:1.45;color:var(--ink2);max-width:520px}
+/* project card pills */
+.pills{list-style:none;display:flex;flex-wrap:wrap;gap:8px;padding:0 8px;margin:-4px 0 2px}
+.pills li{padding:6px 14px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:15px;color:var(--ink2)}
+/* reviews: counts under the heading */
+.rev-title{display:flex;flex-direction:column;gap:12px}
+.rev-stats{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:17px;color:var(--ink2)}
+.rev-stats b{font-family:var(--disp);font-weight:700;color:var(--ink)}
+.rev-stats b.na{color:var(--mute)}
+.rev-stats i{font-style:normal}
+.rev-head{align-items:flex-end}
+@media (max-width:720px){.gate-brand{left:16px;top:14px}.gate-brand img{width:44px;height:44px}.gate-brand strong{font-size:17px}.gate-brand span{font-size:14px}.hero-row{margin-top:28px}}

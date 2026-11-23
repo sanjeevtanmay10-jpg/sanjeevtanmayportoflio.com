@@ -15,6 +15,7 @@
 
 <!-- Start screen and intro -->
 <div id="gate" class="gate" hidden>
+  <div class="gate-brand"><img src="img/profile.jpg" alt="" width="56" height="56"><div><strong>Sanjeev Tanmay</strong><span>UX/UI designer portfolio</span></div></div>
   <div class="gate-stage">
     <span class="seat-spot gate-spot" id="gateSpot"></span>
     <p class="gate-line" id="gateLine" aria-live="polite"></p>
@@ -56,7 +57,7 @@
 <nav id="menu" class="menu" aria-label="Site" aria-hidden="true">
   <ol class="menu-list">
     <li><a href="#about" data-nav="about"><span class="num">01</span>About me</a></li>
-    <li><a href="#projects" data-nav="projects"><span class="num">02</span>Projects</a></li>
+    <li><a href="#projects" data-nav="projects"><span class="num">01</span>Projects</a></li>
     <li><a href="#reviews" data-nav="reviews"><span class="num">03</span>Reviews</a></li>
     <li><a href="#contact" data-nav="contact"><span class="num">04</span>Contact</a></li>
   </ol>
@@ -76,6 +77,19 @@
         <p class="seat-line" aria-live="polite"></p>
       </div>
       <h1 class="name reveal">Sanjeev Tanmay</h1>
+      <div class="hero-row reveal">
+        <p class="hero-intro">UX/UI designer in Delhi, India. Open to freelance work and full-time roles.</p>
+        <a class="btn btn-dark" href="#projects" data-nav="projects">See the projects</a>
+      </div>
+    </section>
+
+    <section id="projects" class="wrap band" data-section>
+      <div class="seat" data-seat="projects" data-look="wink">
+        <span class="seat-spot"></span>
+        <p class="seat-line" aria-live="polite"></p>
+      </div>
+      <h2 class="h2 reveal"><span class="num">01</span>Projects</h2>
+      <div class="cards" id="cards"></div>
     </section>
 
     <section id="about" class="wrap band" data-section>
@@ -85,7 +99,7 @@
       </div>
       <div class="split">
         <div class="split-main reveal">
-          <h2 class="h2"><span class="num">01</span>About me</h2>
+          <h2 class="h2"><span class="num">02</span>About me</h2>
           <p class="big">Hi, I'm Sanjeev, a UX/UI designer. I design apps and websites that make everyday decisions simpler.</p>
           <p class="muted">Based in Delhi, India. Open to freelance work and full-time roles.</p>
         </div>
@@ -109,36 +123,17 @@
       </div>
     </section>
 
-    <section id="live" class="wrap band" data-section aria-labelledby="liveTitle">
-      <div class="seat" data-seat="live" data-look="wink">
-        <span class="seat-spot"></span>
-        <p class="seat-line" aria-live="polite"></p>
-      </div>
-      <h2 class="label" id="liveTitle">Live updates</h2>
-      <dl class="stats reveal" aria-live="polite">
-        <div><dd id="statVisits" class="na">–</dd><dt>visits</dt></div>
-        <div><dd id="statLikes" class="na">–</dd><dt>likes</dt></div>
-        <div><dd id="statReviews" class="na">–</dd><dt>reviews</dt></div>
-      </dl>
-      <p class="muted small" id="liveNote" hidden></p>
-    </section>
-
-    <section id="projects" class="wrap band" data-section>
-      <div class="seat" data-seat="projects" data-look="wink">
-        <span class="seat-spot"></span>
-        <p class="seat-line" aria-live="polite"></p>
-      </div>
-      <h2 class="h2 reveal"><span class="num">02</span>Projects</h2>
-      <div class="cards" id="cards"></div>
-    </section>
-
     <section id="reviews" class="wrap band" data-section>
       <div class="seat" data-seat="reviews" data-look="surprised">
         <span class="seat-spot"></span>
         <p class="seat-line" aria-live="polite"></p>
       </div>
       <div class="rev-head reveal">
-        <h2 class="h2"><span class="num">03</span>Reviews</h2>
+        <div class="rev-title">
+          <h2 class="h2"><span class="num">03</span>Reviews</h2>
+          <p class="rev-stats" aria-live="polite"><span><b id="statVisits" class="na">–</b> <i id="lblVisits">visits</i></span><span><b id="statLikes" class="na">–</b> <i id="lblLikes">likes</i></span><span><b id="statReviews" class="na">–</b> <i id="lblReviews">reviews</i></span></p>
+          <p class="muted small" id="liveNote" hidden></p>
+        </div>
         <button type="button" class="btn btn-line" id="likeBtn" aria-pressed="false">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="heart" d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path class="crack" d="M12 7.6l-2 3.2 3 2.4-2.2 3 1.2 3.4"/></svg>
           <span id="likeText">Like this site</span>

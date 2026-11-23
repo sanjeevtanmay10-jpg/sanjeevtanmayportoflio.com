@@ -23,7 +23,8 @@
     const im = el('div', 'card-img'); const img = el('img'); img.src = 'img/' + p.cover; img.alt = p.alt; img.loading = 'lazy'; im.appendChild(img);
     const h = el('h3'); const main = el('a', 'card-main'); main.href = '#' + p.id;
     main.innerHTML = `<span class="num">${p.n}</span>`; main.appendChild(document.createTextNode(p.name)); h.appendChild(main); h.insertAdjacentHTML('beforeend', ARROW);
-    a.append(im, h, el('p', '', p.line));
+    const pills = el('ul', 'pills'); p.facts.filter(([k]) => k !== 'Made in').forEach(([, v]) => pills.appendChild(el('li', '', v)));
+    a.append(im, h, pills, el('p', '', p.line));
     if (p.link) a.appendChild(extLink(p, 'card-link'));
     cards.appendChild(a);
     const tell = () => { if (SJ.S.anchorKind === 'projects' && !introRunning) speak(p.hover, { look: 'wink', watch: a }); };
@@ -42,7 +43,16 @@
     const dl = el('dl', 'proj-facts reveal');
     p.facts.forEach(([k, v]) => { const d = el('div'); d.append(el('dt', 'label', k), el('dd', '', v)); dl.appendChild(d); });
     const study = el('div', 'study');
-    p.tiles.forEach((t, n) => { const img = el('img'); img.src = 'img/' + t.src; img.width = t.w; img.height = t.h; img.alt = n === 0 ? p.name + ' case study' : ''; if (n > 0) img.loading = 'lazy'; study.appendChild(img); });
+    /* HD case study: one continuous column of images; phones get 1200px, larger/sharp screens 2400px */
+    p.tiles.forEach((t, n) => {
+      const img = el('img'); img.width = t.w; img.height = t.h; img.decoding = 'async';
+      img.srcset = `img/${t.src}-1200.webp 1200w, img/${t.src}-2400.webp 2400w`;
+      img.sizes = '(min-width: 1164px) 1100px, calc(100vw - 64px)';
+      img.src = `img/${t.src}-2400.webp`;
+      img.alt = n === 0 ? p.name + ' case study' : '';
+      if (n > 1) img.loading = 'lazy';
+      study.appendChild(img);
+    });
     const end = el('div', 'wrap');
     end.innerHTML = `<div class="seat" data-seat="proj-end" data-look="wink" style="margin-top:56px"><span class="seat-spot"></span><p class="seat-line" aria-live="polite"></p></div>`;
     const btns = el('div', 'proj-end');
@@ -58,7 +68,7 @@
   }
 
   /* ---------- routing (plain #names only) ---------- */
-  const SECTIONS = ['top', 'about', 'live', 'projects', 'reviews', 'contact'];
+  const SECTIONS = ['top', 'projects', 'about', 'reviews', 'contact'];
   let currentView = 'home', seats = [], said = new Set();
   function route(first) {
     const id = (location.hash || '#top').slice(1), p = projects.find(x => x.id === id);
@@ -225,7 +235,9 @@
   }
   addEventListener('error', e => reportError(e.error || e.message));
   addEventListener('unhandledrejection', e => reportError(e.reason));
-  function setStat(k, n) { const d = stat[k], v = String(n); d.classList.remove('na'); if (d.textContent !== v) { d.textContent = v; d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); } }
+  const LBL = { visits: ['visit', 'visits'], likes: ['like', 'likes'], reviews: ['review', 'reviews'] };
+  function setStat(k, n) {
+    const lb = $('#lbl' + k[0].toUpperCase() + k.slice(1)); if (lb) lb.textContent = LBL[k][Number(n) === 1 ? 0 : 1]; const d = stat[k], v = String(n); d.classList.remove('na'); if (d.textContent !== v) { d.textContent = v; d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); } }
   function offline() { const n = $('#liveNote'); n.hidden = false; Object.values(stat).forEach(d => d.classList.add('na')); n.textContent = 'Live counts are taking a break. Try again in a moment.'; }
   function paintLike() { likeBtn.setAttribute('aria-pressed', liked ? 'true' : 'false'); likeText.textContent = liked ? 'You liked this site' : 'Like this site'; }
   function reviewCard(r) {

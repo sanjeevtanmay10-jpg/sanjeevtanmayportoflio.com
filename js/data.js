@@ -27,63 +27,7 @@ window.SITE={
    "hover": "Splitting a bill by who ate what. Finally, maths that ends arguments.",
    "top": "This is SplitRight. Scroll through the whole case study. I'll meet you at the bottom.",
    "end": "That's SplitRight. Next project, or back to the start?",
-   "tiles": [
-    {
-     "src": "splitright-01.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-02.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-03.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-04.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-05.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-06.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-07.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-08.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-09.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-10.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-11.jpg",
-     "w": 1280,
-     "h": 1432
-    }
-   ]
+   "tiles": [{"src": "cs/splitright-01", "w": 2400, "h": 2400}, {"src": "cs/splitright-02", "w": 2400, "h": 2400}, {"src": "cs/splitright-03", "w": 2400, "h": 2400}, {"src": "cs/splitright-04", "w": 2400, "h": 2400}, {"src": "cs/splitright-05", "w": 2400, "h": 2400}, {"src": "cs/splitright-06", "w": 2400, "h": 2400}, {"src": "cs/splitright-07", "w": 2400, "h": 2400}, {"src": "cs/splitright-08", "w": 2400, "h": 2400}, {"src": "cs/splitright-09", "w": 2400, "h": 2400}, {"src": "cs/splitright-10", "w": 2400, "h": 2400}, {"src": "cs/splitright-11", "w": 2400, "h": 2400}, {"src": "cs/splitright-12", "w": 2400, "h": 2400}, {"src": "cs/splitright-13", "w": 2400, "h": 882}]
   },
   {
    "id": "postfolio",
@@ -106,23 +50,7 @@ window.SITE={
    "hover": "Ten posters in gold frames. He went a little baroque, and I respect it.",
    "top": "Welcome to the gallery. Ten posters, all his. Walk slowly.",
    "end": "That's the whole wall. Next project, or back to the start?",
-   "tiles": [
-    {
-     "src": "postfolio-01.jpg",
-     "w": 1280,
-     "h": 1346
-    },
-    {
-     "src": "postfolio-02.jpg",
-     "w": 1280,
-     "h": 1346
-    },
-    {
-     "src": "postfolio-03.jpg",
-     "w": 1280,
-     "h": 1346
-    }
-   ]
+   "tiles": [{"src": "cs/postfolio-01", "w": 2400, "h": 2400}, {"src": "cs/postfolio-02", "w": 2400, "h": 2400}, {"src": "cs/postfolio-03", "w": 2400, "h": 2400}, {"src": "cs/postfolio-04", "w": 2400, "h": 374}]
   },
   {
    "id": "atelier",
@@ -151,38 +79,7 @@ window.SITE={
    "hover": "A museum that talks to you. No queue, no closing time.",
    "top": "This is Atelier, a museum you can listen to. These are the final screens.",
    "end": "That's Atelier. Next project, or back to the start?",
-   "tiles": [
-    {
-     "src": "atelier-01.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-02.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-03.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-04.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-05.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-06.jpg",
-     "w": 1280,
-     "h": 1435
-    }
-   ]
+   "tiles": [{"src": "cs/atelier-01", "w": 2400, "h": 2400}, {"src": "cs/atelier-02", "w": 2400, "h": 2400}, {"src": "cs/atelier-03", "w": 2400, "h": 2400}, {"src": "cs/atelier-04", "w": 2400, "h": 2400}, {"src": "cs/atelier-05", "w": 2400, "h": 2400}, {"src": "cs/atelier-06", "w": 2400, "h": 2400}, {"src": "cs/atelier-07", "w": 2400, "h": 1794}]
   },
   {
    "id": "forward-2027",
@@ -211,33 +108,7 @@ window.SITE={
    "hover": "An event sign-up in about three minutes. I timed it. Roughly.",
    "top": "Forward 2027. A sign-up flow built for phones first. Have a scroll.",
    "end": "And that's the last one. Back to the start?",
-   "tiles": [
-    {
-     "src": "forward-01.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-02.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-03.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-04.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-05.jpg",
-     "w": 1280,
-     "h": 1213
-    }
-   ]
+   "tiles": [{"src": "cs/forward-01", "w": 2400, "h": 2400}, {"src": "cs/forward-02", "w": 2400, "h": 2400}, {"src": "cs/forward-03", "w": 2400, "h": 2400}, {"src": "cs/forward-04", "w": 2400, "h": 2400}, {"src": "cs/forward-05", "w": 2400, "h": 1800}]
   }
  ],
  "lines": {
