@@ -6,7 +6,7 @@ window.SITE={
    "linkLabel": "Try the prototype",
    "n": "01",
    "name": "SplitRight",
-   "cover": "cover-splitright.jpg",
+   "cover": "cover-splitright",
    "alt": "SplitRight case study cover with phone screens",
    "line": "A bill-splitting app that charges each person for what they actually ate, tax included, not an equal share.",
    "sum": "SplitRight is a bill-splitting app for people who eat out together. You scan the bill, assign each item to the people who shared it, and the app works out what everyone owes, including tax.",
@@ -26,71 +26,14 @@ window.SITE={
    ],
    "hover": "Splitting a bill by who ate what. Finally, maths that ends arguments.",
    "top": "This is SplitRight. Scroll through the whole case study. I'll meet you at the bottom.",
-   "end": "That's SplitRight. Next project, or back to the start?",
-   "tiles": [
-    {
-     "src": "splitright-01.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-02.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-03.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-04.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-05.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-06.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-07.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-08.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-09.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-10.jpg",
-     "w": 1280,
-     "h": 1437
-    },
-    {
-     "src": "splitright-11.jpg",
-     "w": 1280,
-     "h": 1432
-    }
-   ]
+   "end": "That's SplitRight. Next project, or back to the start?"
   },
   {
    "id": "postfolio",
    "n": "02",
    "name": "Postfolio",
-   "cover": "cover-postfolio.jpg",
-   "alt": "Postfolio cover in the style of a classical painting",
+   "cover": "cover-postfolio",
+   "alt": "Two of the Postfolio posters in gold frames on a red damask wall",
    "line": "A set of posters covering typography, illustration and photo work, shown as a gallery.",
    "sum": "Postfolio is a collection of ten posters, presented as a gallery wall. It covers typography, illustration and photo-based work.",
    "facts": [
@@ -105,24 +48,7 @@ window.SITE={
    ],
    "hover": "Ten posters in gold frames. He went a little baroque, and I respect it.",
    "top": "Welcome to the gallery. Ten posters, all his. Walk slowly.",
-   "end": "That's the whole wall. Next project, or back to the start?",
-   "tiles": [
-    {
-     "src": "postfolio-01.jpg",
-     "w": 1280,
-     "h": 1346
-    },
-    {
-     "src": "postfolio-02.jpg",
-     "w": 1280,
-     "h": 1346
-    },
-    {
-     "src": "postfolio-03.jpg",
-     "w": 1280,
-     "h": 1346
-    }
-   ]
+   "end": "That's the whole wall. Next project, or back to the start?"
   },
   {
    "id": "atelier",
@@ -130,7 +56,7 @@ window.SITE={
    "linkLabel": "Visit the live site",
    "n": "03",
    "name": "Atelier",
-   "cover": "cover-atelier.jpg",
+   "cover": "cover-atelier",
    "alt": "Atelier home page with five framed paintings",
    "line": "An online museum where a narrated audio guide tells each painting's story, so visitors listen instead of reading walls of text.",
    "sum": "Atelier is an online museum of five masters and twenty-five works. Each painting comes with a narrated audio guide in short chapters, so visitors listen to the story instead of reading long text.",
@@ -150,39 +76,7 @@ window.SITE={
    ],
    "hover": "A museum that talks to you. No queue, no closing time.",
    "top": "This is Atelier, a museum you can listen to. These are the final screens.",
-   "end": "That's Atelier. Next project, or back to the start?",
-   "tiles": [
-    {
-     "src": "atelier-01.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-02.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-03.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-04.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-05.jpg",
-     "w": 1280,
-     "h": 1439
-    },
-    {
-     "src": "atelier-06.jpg",
-     "w": 1280,
-     "h": 1435
-    }
-   ]
+   "end": "That's Atelier. Next project, or back to the start?"
   },
   {
    "id": "forward-2027",
@@ -190,7 +84,7 @@ window.SITE={
    "linkLabel": "Try the prototype",
    "n": "04",
    "name": "Forward 2027",
-   "cover": "cover-forward.jpg",
+   "cover": "cover-forward",
    "alt": "Forward 2027 registration case study cover with a phone mockup",
    "line": "A mobile-first event registration flow: pick how you attend, choose a ticket and sign up in about three minutes.",
    "sum": "Forward 2027 is a registration website for a one-day conference. People choose how they attend, pick a ticket and register on a phone in about three minutes.",
@@ -210,34 +104,7 @@ window.SITE={
    ],
    "hover": "An event sign-up in about three minutes. I timed it. Roughly.",
    "top": "Forward 2027. A sign-up flow built for phones first. Have a scroll.",
-   "end": "And that's the last one. Back to the start?",
-   "tiles": [
-    {
-     "src": "forward-01.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-02.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-03.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-04.jpg",
-     "w": 1280,
-     "h": 1216
-    },
-    {
-     "src": "forward-05.jpg",
-     "w": 1280,
-     "h": 1213
-    }
-   ]
+   "end": "And that's the last one. Back to the start?"
   }
  ],
  "lines": {

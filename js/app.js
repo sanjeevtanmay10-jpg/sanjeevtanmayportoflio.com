@@ -6,6 +6,16 @@
   const home = $('#home'), projView = $('#project'), gate = $('#gate');
   const pick = (arr, key) => { const i = (pick[key] = ((pick[key] ?? -1) + 1) % arr.length); return arr[i]; };
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const IM = window.IMGS || {}, STORY = window.STORY || {};
+  /* responsive image: every key has 1200px and 2400px versions (or a single size), so it stays sharp on retina screens */
+  function pic(key, alt, sizes, lazy) {
+    const m = IM[key], img = el('img');
+    img.src = 'img/w/' + key + '-' + m.sizes[0] + '.webp';
+    if (m.sizes.length > 1) img.srcset = m.sizes.map(w => 'img/w/' + key + '-' + w + '.webp ' + w + 'w').join(', ');
+    img.sizes = sizes; img.width = m.w; img.height = m.h; img.alt = alt || ''; img.decoding = 'async';
+    if (lazy) img.loading = 'lazy';
+    return img;
+  }
   const ARROW = '<svg class="go" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
 
   const EXT = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
@@ -20,10 +30,11 @@
   projects.forEach(p => {
     /* the whole card opens the case study; the small link button opens the live site / prototype in a new tab */
     const a = el('article', 'card reveal'); a.dataset.proj = p.id;
-    const im = el('div', 'card-img'); const img = el('img'); img.src = 'img/' + p.cover; img.alt = p.alt; img.loading = 'lazy'; im.appendChild(img);
+    const im = el('div', 'card-img'); im.appendChild(pic(p.cover, p.alt, '(min-width: 1000px) 600px, 100vw', true));
     const h = el('h3'); const main = el('a', 'card-main'); main.href = '#' + p.id;
     main.innerHTML = `<span class="num">${p.n}</span>`; main.appendChild(document.createTextNode(p.name)); h.appendChild(main); h.insertAdjacentHTML('beforeend', ARROW);
-    a.append(im, h, el('p', '', p.line));
+    const meta = el('ul', 'card-meta'); p.facts.slice(0, 2).forEach(([, v]) => meta.appendChild(el('li', '', v)));
+    a.append(im, h, meta, el('p', '', p.line));
     if (p.link) a.appendChild(extLink(p, 'card-link'));
     cards.appendChild(a);
     const tell = () => { if (SJ.S.anchorKind === 'projects' && !introRunning) speak(p.hover, { look: 'wink', watch: a }); };
@@ -41,8 +52,17 @@
     const sum = el('p', 'proj-sum reveal', p.sum);
     const dl = el('dl', 'proj-facts reveal');
     p.facts.forEach(([k, v]) => { const d = el('div'); d.append(el('dt', 'label', k), el('dd', '', v)); dl.appendChild(d); });
-    const study = el('div', 'study');
-    p.tiles.forEach((t, n) => { const img = el('img'); img.src = 'img/' + t.src; img.width = t.w; img.height = t.h; img.alt = n === 0 ? p.name + ' case study' : ''; if (n > 0) img.loading = 'lazy'; study.appendChild(img); });
+    const study = el('div', 'story'), st = STORY[p.id] || { chapters: [] };
+    if (st.lead) study.appendChild(figure({ k: st.lead.k, alt: st.lead.alt }, 'fig fig-lead', false));
+    st.chapters.forEach(c => {
+      const sec = el('section', 'ch'), head = el('div', 'ch-head'), body = el('div', 'ch-body');
+      head.appendChild(el('h2', 'ch-title', c.h));
+      (c.t || []).forEach(t => body.appendChild(el('p', '', t)));
+      if (c.list) { const dl = el('dl', 'ch-list'); c.list.forEach(([k, v]) => { const d = el('div'); d.append(el('dt', '', k), el('dd', '', v)); dl.appendChild(d); }); body.appendChild(dl); }
+      sec.append(head, body);
+      if (c.figs) { const g = el('div', 'figs' + (c.cols === 2 ? ' figs-2' : '')); c.figs.forEach(f => g.appendChild(figure(f, 'fig', true, c.cols === 2))); sec.appendChild(g); }
+      study.appendChild(sec);
+    });
     const end = el('div', 'wrap');
     end.innerHTML = `<div class="seat" data-seat="proj-end" data-look="wink" style="margin-top:56px"><span class="seat-spot"></span><p class="seat-line" aria-live="polite"></p></div>`;
     const btns = el('div', 'proj-end');
@@ -53,16 +73,42 @@
     end.appendChild(btns);
     s.append(h, sum, dl);
     if (p.link) { const lk = extLink(p, 'btn btn-dark proj-link reveal'); s.appendChild(lk); } const sw = el('div', 'wrap'); sw.appendChild(study); projView.append(s, sw, end);
+    
     projView.dataset.top = p.top; projView.dataset.end = p.end; projView.dataset.name = p.name;
     document.title = p.name + ' — Sanjeev Tanmay';
   }
 
+  /* ---------- figures and the full-size viewer ---------- */
+  function figure(f, cls, lazy, half) {
+    const fig = el('figure', cls), b = el('button', 'fig-btn'); b.type = 'button';
+    b.setAttribute('aria-label', 'Open full size: ' + f.alt);
+    b.appendChild(pic(f.k, f.alt, half ? '(min-width: 1000px) 560px, 100vw' : '(min-width: 1200px) 1140px, 100vw', lazy));
+    b.insertAdjacentHTML('beforeend', '<span class="fig-zoom" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M11 8v6M8 11h6"/></svg></span>');
+    b.addEventListener('click', () => openLightbox(f));
+    fig.appendChild(b);
+    if (f.cap) fig.appendChild(el('figcaption', '', f.cap));
+    return fig;
+  }
+  const lb = $('#lightbox'), lbImg = $('#lbImg'), lbCap = $('#lbCap');
+  let lbFrom = null;
+  function openLightbox(f) {
+    const m = IM[f.k]; lbFrom = document.activeElement;
+    lbImg.src = 'img/w/' + f.k + '-' + m.sizes[m.sizes.length - 1] + '.webp'; lbImg.alt = f.alt; lbImg.width = m.w; lbImg.height = m.h;
+    lbCap.textContent = f.cap || f.alt;
+    if (lb.showModal) lb.showModal(); else lb.setAttribute('open', '');
+    $('.lb-scroll', lb).scrollTop = 0;
+  }
+  function closeLightbox() { if (lb.open) { lb.close ? lb.close() : lb.removeAttribute('open'); } }
+  $('#lbClose').addEventListener('click', closeLightbox);
+  lb.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
+  lb.addEventListener('close', () => { lbImg.removeAttribute('src'); if (lbFrom && lbFrom.focus) lbFrom.focus({ preventScroll: true }); });
+
   /* ---------- routing (plain #names only) ---------- */
-  const SECTIONS = ['top', 'about', 'live', 'projects', 'reviews', 'contact'];
+  const SECTIONS = ['top', 'projects', 'about', 'reviews', 'contact'];
   let currentView = 'home', seats = [], said = new Set();
   function route(first) {
     const id = (location.hash || '#top').slice(1), p = projects.find(x => x.id === id);
-    closeMenu();
+    closeMenu(); closeLightbox();
     if (p) {
       renderProject(p); home.hidden = true; projView.hidden = false; currentView = id;
       window.scrollTo(0, 0);
@@ -169,8 +215,10 @@
       if (force && !SJ.S.placed) SJ.place();
     }
   }
+  const paintHeader = () => document.body.classList.toggle('scrolled', scrollY > 12);
+  paintHeader();
   let ticking = false;
-  addEventListener('scroll', () => { act(); if (pendSeat) arrive(pendSeat); if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; pickAnchor(false); }); } }, { passive: true });
+  addEventListener('scroll', () => { paintHeader(); act(); if (pendSeat) arrive(pendSeat); if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; pickAnchor(false); }); } }, { passive: true });
   addEventListener('resize', () => pickAnchor(false));
   function act() { lastAct = performance.now(); wake(); }
   function wake() { if (dozing) { dozing = false; SJ.doze(false); } }
@@ -225,7 +273,11 @@
   }
   addEventListener('error', e => reportError(e.error || e.message));
   addEventListener('unhandledrejection', e => reportError(e.reason));
-  function setStat(k, n) { const d = stat[k], v = String(n); d.classList.remove('na'); if (d.textContent !== v) { d.textContent = v; d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); } }
+  function setStat(k, n) {
+    const d = stat[k], v = String(n), lab = d.parentNode.querySelector('[data-one]');
+    d.classList.remove('na'); if (lab) lab.textContent = n === 1 ? lab.dataset.one : lab.dataset.many;
+    if (d.textContent !== v) { d.textContent = v; d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); }
+  }
   function offline() { const n = $('#liveNote'); n.hidden = false; Object.values(stat).forEach(d => d.classList.add('na')); n.textContent = 'Live counts are taking a break. Try again in a moment.'; }
   function paintLike() { likeBtn.setAttribute('aria-pressed', liked ? 'true' : 'false'); likeText.textContent = liked ? 'You liked this site' : 'Like this site'; }
   function reviewCard(r) {
@@ -353,12 +405,13 @@
     $('#gateUi').classList.add('gone');
     const alive = async ms => { await wait(ms); return !done; };
     const gl = $('#gateLine');
-    if (!(await alive(350))) return;
-    SJ.showFace(true); SJ.express('surprised', 700); SJ.Sound.ooh(); SJ.hop(.5);
-    if (!(await alive(750))) return; SJ.lookAt(-.9, .05, 480);
-    if (!(await alive(480))) return; SJ.lookAt(.9, .05, 480);
-    if (!(await alive(480))) return; SJ.lookAt(0, 0, 500); SJ.express('happy', 600);
-    if (!(await alive(450))) return;
+    /* a short look around (about 1.2 s), then Sanju speaks: no long silent pause */
+    if (!(await alive(200))) return;
+    SJ.showFace(true); SJ.express('surprised', 500); SJ.Sound.ooh(); SJ.hop(.5);
+    if (!(await alive(420))) return; SJ.lookAt(-.9, .05, 300);
+    if (!(await alive(300))) return; SJ.lookAt(.9, .05, 300);
+    if (!(await alive(300))) return; SJ.lookAt(0, 0, 300); SJ.express('happy', 500);
+    if (!(await alive(150))) return;
     if (!(await SJ.say(lines.intro1, { el: gl, look: 'wink' })) || done) return;
     if (!(await alive(500))) return;
     document.body.classList.add('hdr-in');
